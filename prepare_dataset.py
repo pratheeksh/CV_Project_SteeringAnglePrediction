@@ -19,6 +19,7 @@ def main():
 
     df_steer = pd.read_csv(steering_log,usecols=['timestamp','angle'],index_col = False)
     df_camera = pd.read_csv(image_log,usecols=['timestamp','filename'],index_col = False)
+    # df_camera = pd.read_csv(image_log,usecols=['timestamp'],index_col = False)
 
     leng = len(df_camera['timestamp'])
     df_camera['angle'] = pd.Series(np.random.randn(leng), index=df_camera.index)

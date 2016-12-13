@@ -27,7 +27,7 @@ local function basicblock(n, stride)
 
    local nInputPlane = iChannels
    iChannels = n
-   print (nInputPlane, iChannels, n)
+   -- print (nInputPlane, iChannels, n)
 
    local s = nn.Sequential()
    s:add(Convolution(nInputPlane,n,3,3,stride,stride,1,1))
@@ -65,12 +65,12 @@ model:add(layer(32, n, 2))
 model:add(layer(64, n, 2))
 model:add(ReLU(true))
 model:add(Avg(8, 8, 1, 1))
-model:add(nn.View(64):setNumInputDims(3))
-model:add(nn.Linear(64, 43))
-print(model)
+model:add(nn.View(64*25*25):setNumInputDims(3))
+model:add(nn.Linear(64*25*25, 1))
+-- print(model)--]]
 model:cuda()
-input = torch.CudaTensor(1,3,32,32)                        
+input = torch.CudaTensor(1,3,128,128)
 out = model:forward(input)                        
-print(model:size())
+print(out:size())
 return model
 

@@ -1,9 +1,23 @@
 require 'torch'
+require 'cutorch'
 require 'optim'
 require 'os'
 require 'optim'
 require 'xlua'
--- require 'cunn'
+require'lfs'
+names = {}
+local END = 12
+for file in lfs.dir[[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/train_images_center/]] do
+    --if lfs.attributes(file,"mode") == "file" then 
+    -- print(file,string.sub(file,0,END))
+    name = string.sub(file,0,END)
+    --end
+    names[name] = file
+end
+
+-- torch.save('names.t7',names)
+
+require 'cunn'
 -- require 'cudnn' -- faster convolutions
 
 --[[
@@ -11,13 +25,18 @@ require 'xlua'
 --  Look into torch wiki for packages that can help you plot.
 --]]
 
+-- local trainData = torch.load(DATA_PATH..'train.t7')
+-- local testData = torch.load(DATA_PATH..'test.t7')
+local csv2tensor = require 'csv2tensor'
+local trainData, column_names = csv2tensor.load("/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/images_to_angles_center_ready.csv") 
+
 local tnt = require 'torchnet'
 local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 32, 32
-local DATA_PATH = (opt.data ~= '' and opt.data or './data/')
+local WIDTH, HEIGHT = 128,128
+local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 torch.setdefaulttensortype('torch.DoubleTensor')
 
@@ -26,7 +45,8 @@ torch.manualSeed(opt.manualSeed)
 -- cutorch.manualSeedAll(opt.manualSeed)
 
 function resize(img)
-    return image.scale(img, WIDTH,HEIGHT)
+    modimg = img[{{},{200,480},{}}]
+    return image.scale(modimg,WIDTH,HEIGHT)
 end
 
 --[[
@@ -43,13 +63,18 @@ end
 
 function getTrainSample(dataset, idx)
     r = dataset[idx]
-    classId, track, file = r[9], r[1], r[2]
+    file = string.format("%19d.jpg", r[1])
+    name = string.sub(file,1,END)
+    return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
+    -- replaces names[name]
+    --[[classId, track, file = r[9], r[1], r[2]
     file = string.format("%05d/%05d_%05d.ppm", classId, track, file)
-    return transformInput(image.load(DATA_PATH .. '/train_images/'..file))
+    return transformInput(image.load(DATA_PATH .. '/train_images/'..file))--]]
 end
 
 function getTrainLabel(dataset, idx)
-    return torch.LongTensor{dataset[idx][9] + 1}
+    -- return torch.LongTensor{dataset[idx][9] + 1}
+	return torch.DoubleTensor{100.00*dataset[idx][2]}
 end
 
 function getTestSample(dataset, idx)
@@ -70,8 +95,6 @@ function getIterator(dataset)
     }
 end
 
-local trainData = torch.load(DATA_PATH..'train.t7')
-local testData = torch.load(DATA_PATH..'test.t7')
 
 trainDataset = tnt.SplitDataset{
     partitions = {train=0.9, val=0.1},
@@ -95,7 +118,7 @@ trainDataset = tnt.SplitDataset{
     }
 }
 
-testDataset = tnt.ListDataset{
+--[[testDataset = tnt.ListDataset{
     list = torch.range(1, testData:size(1)):long(),
     load = function(idx)
         return {
@@ -104,7 +127,7 @@ testDataset = tnt.ListDataset{
         }
     end
 }
-
+]]
 
 --[[
 -- Hint:  Use :cuda to convert your model to use GPUs
@@ -112,10 +135,12 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.CrossEntropyCriterion()
+local criterion = nn.MSECriterion()--nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
 local batch = 1
+model:cuda()
+criterion:cuda()
 
 -- print(model)
 
@@ -137,13 +162,26 @@ end
 --]]
 -- engine.hooks.onSample = function(state)
 -- end
+local input  = torch.CudaTensor()
+local target = torch.CudaTensor()
+engine.hooks.onSample = function(state)
+  input:resize( 
+      state.sample.input:size()
+  ):copy(state.sample.input)
+  state.sample.input  = input
+  if state.sample.target then
+      target:resize( state.sample.target:size()):copy(state.sample.target)
+      state.sample.target = target
+  end 
+end
+
 
 engine.hooks.onForwardCriterion = function(state)
     meter:add(state.criterion.output)
-    clerr:add(state.network.output, state.sample.target)
+    -- clerr:add(state.network.output, state.sample.target)
     if opt.verbose == true then
         print(string.format("%s Batch: %d/%d; avg. loss: %2.4f; avg. error: %2.4f",
-                mode, batch, state.iterator.dataset:size(), meter:value(), clerr:value{k = 1}))
+                mode, batch, state.iterator.dataset:size(), meter:value())) -- , clerr:value{k = 1}))
     else
         xlua.progress(batch, state.iterator.dataset:size())
     end
@@ -164,11 +202,11 @@ while epoch <= opt.nEpochs do
         network = model,
         criterion = criterion,
         iterator = getIterator(trainDataset),
-        optimMethod = optim.sgd,
+        optimMethod = optim.adam,
         maxepoch = 1,
         config = {
             learningRate = opt.LR,
-            momentum = opt.momentum
+            -- momentum = opt.momentum
         }
     }
 

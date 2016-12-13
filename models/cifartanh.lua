@@ -23,6 +23,6 @@ model:add(Dropout(0.5))
 model:add(Linear(1600, 64))
 model:add(Tanh())
 model:add(Dropout(0.5))
-model:add(Linear(64, 43))
-model:cuda()
+model:add(Linear(64, 1))
+-- model:cuda()
 return model
