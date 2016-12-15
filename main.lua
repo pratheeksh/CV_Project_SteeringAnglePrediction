@@ -40,20 +40,12 @@ local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 torch.setdefaulttensortype('torch.DoubleTensor')
 
--- torch.setnumthreads(1)
 torch.manualSeed(opt.manualSeed)
--- cutorch.manualSeedAll(opt.manualSeed)
 
 function resize(img)
     modimg = img[{{},{200,480},{}}]
     return image.scale(modimg,WIDTH,HEIGHT)
 end
-
---[[
--- Hint:  Should we add some more transforms? shifting, scaling?
--- Should all images be of size 32x32?  Are we losing
--- information by resizing bigger images to a smaller size?
---]]
 function transformInput(inp)
     f = tnt.transform.compose{
         [1] = resize
@@ -66,10 +58,6 @@ function getTrainSample(dataset, idx)
     file = string.format("%19d.jpg", r[1])
     name = string.sub(file,1,END)
     return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
-    -- replaces names[name]
-    --[[classId, track, file = r[9], r[1], r[2]
-    file = string.format("%05d/%05d_%05d.ppm", classId, track, file)
-    return transformInput(image.load(DATA_PATH .. '/train_images/'..file))--]]
 end
 
 function getTrainLabel(dataset, idx)
@@ -99,12 +87,7 @@ end
 trainDataset = tnt.SplitDataset{
     partitions = {train=0.9, val=0.1},
     initialpartition = 'train',
-    --[[
-    --  Hint:  Use a resampling strategy that keeps the
-    --  class distribution even during initial training epochs
-    --  and then slowly converges to the actual distribution
-    --  in later stages of training.
-    --]]
+   
     dataset = tnt.ShuffleDataset{
         dataset = tnt.ListDataset{
             list = torch.range(1, trainData:size(1)):long(),
@@ -129,9 +112,7 @@ trainDataset = tnt.SplitDataset{
 }
 ]]
 
---[[
--- Hint:  Use :cuda to convert your model to use GPUs
---]]
+
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
@@ -156,12 +137,7 @@ engine.hooks.onStart = function(state)
     end
 end
 
---[[
--- Hint:  Use onSample function to convert to
---        cuda tensor for using GPU
---]]
--- engine.hooks.onSample = function(state)
--- end
+
 local input  = torch.CudaTensor()
 local target = torch.CudaTensor()
 engine.hooks.onSample = function(state)
@@ -224,10 +200,7 @@ local submission = assert(io.open(opt.logDir .. "/submission.csv", "w"))
 submission:write("Filename,ClassId\n")
 batch = 1
 
---[[
---  This piece of code creates the submission
---  file that has to be uploaded in kaggle.
---]]
+
 engine.hooks.onForward = function(state)
     local fileNames  = state.sample.sampleId
     local _, pred = state.network.output:max(2)
