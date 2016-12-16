@@ -75,12 +75,14 @@ function getIterator(dataset)
     --[[
     -- Hint:  Use ParallelIterator for using multiple CPU cores
     --]]
-    return tnt.DatasetIterator{
-        dataset = tnt.BatchDataset{
+	return  tnt.DatasetIterator{
+    	dataset =  tnt.ShuffleDataset{        
+	dataset = tnt.BatchDataset{
             batchsize = opt.batchsize,
             dataset = dataset
         }
     }
+}
 end
 
 
@@ -88,7 +90,7 @@ trainDataset = tnt.SplitDataset{
     partitions = {train=0.9, val=0.1},
     initialpartition = 'train',
    
-    dataset = tnt.ShuffleDataset{
+    ---dataset = tnt.ShuffleDataset{
         dataset = tnt.ListDataset{
             list = torch.range(1, trainData:size(1)):long(),
             load = function(idx)
@@ -99,7 +101,7 @@ trainDataset = tnt.SplitDataset{
             end
         }
     }
-}
+---}
 
 --[[testDataset = tnt.ListDataset{
     list = torch.range(1, testData:size(1)):long(),
