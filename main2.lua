@@ -123,13 +123,20 @@ trainDataset = tnt.SplitDataset{
     }
 }
 
+
+function getSampleId(dataset, idx) 
+	file = string.format("%19d", dataset[idx])
+	chopped =  string.sub(test_names[string.sub(file,1,12)], 1, 19)
+	return chopped
+	--return torch.LongTensor{tonumber(chopped)}
+end
 testDataset = tnt.ListDataset{
-    list = torch.range(1, testData:size(1)):long(),
+    list = torch.range(1, testData:size(1)-1):long(),
     load = function(idx)
         return {
             input = getTestSample(testData, idx),
-            sampleId = torch.LongTensor{testData[idx]}
-        }
+            sampleId =getSampleId(testData, idx)
+	 }
     end
 }
 
@@ -250,7 +257,7 @@ engine.hooks.onForward = function(state)
     local fileNames  = state.sample.sampleId
     local pred = state.network.output
     for i = 1, pred:size(1) do
-        submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
+        submission:write(fileNames[i]..','..string.format("%f\n", pred[i][1]))
     end
     xlua.progress(batch, state.iterator.dataset:size())
     batch = batch + 1

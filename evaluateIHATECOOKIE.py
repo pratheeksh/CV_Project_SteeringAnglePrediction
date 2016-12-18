@@ -23,6 +23,7 @@ for l in results:
 	frame_id, angle = l[0], l[1]
 	if frame_id == "frame_id":
 		continue
+	frame_id = frame_id+'.jpg'
 	error += (evaluation_data[frame_id]*100 - float(angle))**2  # (evaluation_data[frame_id] - float(angle))
 	n += 1
 final_error = math.sqrt(error/n)
