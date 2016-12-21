@@ -7,8 +7,24 @@ require 'xlua'
 require'lfs'
 names = {}
 test_names =  {}
+
+--[[ Adding data paths --]]
+
+trainDataPath = "/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/center.csv" 
+testDataPath = "/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/test_center.csv"
+trainDir = [[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/train_images_center/]]
+testDir = [[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/test_center/]]
+
+
+
+trainDataPath = "data_/csv/center.csv"
+testDataPath = "data_/csv/test_center.csv"
+trainDir =  [[data_/train_images_center/]]
+testDir = [[data_/train_images_center/]]
+
+
 local END = 12
-for file in lfs.dir[[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/train_images_center/]] do
+for file in lfs.dir(trainDir) do
     --if lfs.attributes(file,"mode") == "file" then 
     -- print(file,string.sub(file,0,END))
     name = string.sub(file,1,END)
@@ -16,7 +32,7 @@ for file in lfs.dir[[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/
     names[name] = file
 end
 
-for file in lfs.dir[[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/test_center/]] do
+for file in lfs.dir(testDir) do
     name = string.sub(file,1,END)
     test_names[name] = file
 end
@@ -29,9 +45,9 @@ require 'cudnn' -- faster convolutions
 local csv2tensor = require 'csv2tensor'
 local os = require 'os'
 local math  = require 'math'
-local trainData, column_names = csv2tensor.load("/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/center.csv") 
+local trainData, column_names = csv2tensor.load(trainDataPath) 
 
-local testData = csv2tensor.load("/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/test_center.csv")
+local testData = csv2tensor.load(testDataPath)
 local tnt = require 'torchnet'
 local image = require 'image'
 local optParser = require 'opts'
@@ -75,7 +91,10 @@ function getTrainSample(dataset, idx)
     r = dataset[idx]
     file = string.format("%19d.jpg", r[1])
     name = string.sub(file,1,END)
-    -- print(file,names[name],name)
+    if names[name] == nil then 
+	names[name] =  '1479425800143702153.jpg'
+    end
+    --print(file,names[name],name)
     return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
 end
 
@@ -91,18 +110,35 @@ function getTestSample(dataset, idx)
     return transformInput(image.load(file_name))
 end
 
-function getIterator(dataset)
-    --[[
-    -- Hint:  Use ParallelIterator for using multiple CPU cores
-    --]]
+if opt.p == true then 
+   function getIterator(dataset) 
+ 	return tnt.ParallelDatasetIterator{
+		nThread = 4, 
+		init = function()
+			print("If you want to init some key paprams")
+		end,
+		closure = function()
+		return  tnt.ShuffleDataset{
+   			dataset =  tnt.BatchDataset {
+				batchSize = opt.batchSize,
+				dataset = dataset
+			}
+		}
+		end
+	}
+   end 
+else 
+   function getIterator(dataset)
+   
 	return  tnt.DatasetIterator{
-    	dataset =  tnt.ShuffleDataset{        
-	dataset = tnt.BatchDataset{
-            batchsize = opt.batchsize,
-            dataset = dataset
-        }
-    }
-}
+	    	dataset =  tnt.ShuffleDataset{        
+			dataset = tnt.BatchDataset{
+            			batchsize = opt.batchsize,
+           			dataset = dataset
+        		}
+    		}
+	}
+   end
 end
 
 
