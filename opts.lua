@@ -21,6 +21,7 @@ function M.parse(arg)
     cmd:option('-p', false, 'Parallel Iterator')
     cmd:option('-imageSize', 128, 'Image Size') 
     cmd:option('-output' , 'Trail1', 'OutputFilenane')
+    cmd:option('-scale', 1, 'Scaling factor')
      --[[
     -- Hint: Use this option to convert your code to use GPUs
     --]]

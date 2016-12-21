@@ -13,11 +13,17 @@ test_names =  {}
 trainDataPath = "data_/csv/center.csv"
 testDataPath = "data_/csv/test_center.csv"
 trainDir =  [[data_/train_images_center/]]
-testDir = [[data_/train_images_center/]]
-
+testDir = [[data_/test_center/]]
+local END = 12
 for file in lfs.dir(trainDir) do
     name = string.sub(file,1,END)
     names[name] = file
+end
+
+for file in lfs.dir(testDir) do
+--    print(file)
+    name = string.sub(file,1,END)
+    test_names[name] = file
 end
 
 function  resize(img)
@@ -60,7 +66,7 @@ end
 
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
-        return torch.DoubleTensor{100.00*dataset[idx][2]}
+        return torch.DoubleTensor{opt.scale*dataset[idx][2]}
 end
 
 function getTestSample(dataset, idx)
