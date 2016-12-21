@@ -110,24 +110,28 @@ function getTestSample(dataset, idx)
     return transformInput(image.load(file_name))
 end
 
+print("Parallel Iterator option ", opt.p)
 if opt.p == true then 
+   print("Loading parallel data set iterator")
    function getIterator(dataset) 
+	local lopt = opt
  	return tnt.ParallelDatasetIterator{
-		nThread = 4, 
-		init = function()
-			print("If you want to init some key paprams")
+		nthread = 4, 
+		init = function()	
+			opt = lopt
+			require 'torchnet'
+			assert(loadfile("dataload.lua"))(opt)
 		end,
 		closure = function()
-		return  tnt.ShuffleDataset{
-   			dataset =  tnt.BatchDataset {
-				batchSize = opt.batchSize,
+			return  tnt.BatchDataset {
+				batchsize = opt.batchsize,
 				dataset = dataset
 			}
-		}
 		end
 	}
    end 
-else 
+else
+   print("Loading normal Iterator") 
    function getIterator(dataset)
    
 	return  tnt.DatasetIterator{
@@ -201,6 +205,11 @@ engine.hooks.onStart = function(state)
     else
         mode = 'Val'
     end
+   if opt.p == true then
+        dataSize = state.iterator:execSingle('size')
+    else
+        dataSize = state.iterator:exec('size')
+    end
 end
 
 
@@ -236,9 +245,9 @@ engine.hooks.onForwardCriterion = function(state)
 
     if opt.verbose == true then
         print(string.format("%s Batch: %d/%d; avg. loss: %2.4f; avg. error: %2.4f",
-                mode, batch, state.iterator.dataset:size(), meter:value())) -- , clerr:value{k = 1}))
+                mode, batch, dataSize, meter:value() ,clerr:value{k = 1}))
     else
-        xlua.progress(batch, state.iterator.dataset:size())
+        xlua.progress(batch, dataSize)
     end
     batch = batch + 1 -- batch increment has to happen here to work for train, val and test.
     timer:incUnit()
@@ -288,7 +297,7 @@ engine.hooks.onForward = function(state)
     for i = 1, pred:size(1) do
         submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
     end
-    xlua.progress(batch, state.iterator.dataset:size())
+    xlua.progress(batch, dataSize)
     batch = batch + 1
 end
 

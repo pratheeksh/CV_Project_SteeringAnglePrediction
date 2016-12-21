@@ -18,7 +18,8 @@ function M.parse(arg)
     cmd:option('-logDir',           'logs',         'log directory')
     cmd:option('-model',            '',             'Model to use for training')
     cmd:option('-verbose',          'false',        'Print stats for every batch')
-    cmd:option('-p', 'false', 'Parallel Iterator')
+    cmd:option('-p', false, 'Parallel Iterator')
+    cmd:option('-imageSize', 128, 'Image Size')
      --[[
     -- Hint: Use this option to convert your code to use GPUs
     --]]
