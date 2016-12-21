@@ -116,7 +116,7 @@ if opt.p == true then
    function getIterator(dataset) 
 	local lopt = opt
  	return tnt.ParallelDatasetIterator{
-		nthread = 4, 
+		nthread = 1, 
 		init = function()	
 			opt = lopt
 			require 'torchnet'
