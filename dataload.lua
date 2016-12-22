@@ -2,7 +2,7 @@ require 'torch'
 local opt, datamean, datastd = ...
 local tnt = require 'torchnet'
 local image = require 'image'
-local WIDTH, HEIGHT = opt.imageSize, opt.imageSize
+local WIDTH, HEIGHT = 128,128 -- 320, 140 -- opt.imageSize, opt.imageSize
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 torch.setdefaulttensortype('torch.DoubleTensor')
@@ -10,7 +10,7 @@ torch.setdefaulttensortype('torch.DoubleTensor')
 
 names = {}
 test_names =  {}
-trainDataPath = "data_/csv/centerclasses.csv"
+trainDataPath = "data_/csv/center.csv"
 testDataPath = "data_/csv/test_center.csv"
 trainDir =  [[data_/train_images_center/]]
 testDir = [[data_/test_center/]]
@@ -54,8 +54,8 @@ function norm(img)
 end
 function transformInput(inp)
     f = tnt.transform.compose{
-        [1] = resize
-     --   [2] = yuv,
+        [1] = resize,
+       [2] = yuv,
        -- [3] = norm
     }
     -- image.display(f(inp))
@@ -73,7 +73,7 @@ end
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
 --     print(dataset[idx][2])
-        return torch.DoubleTensor{opt.scale*dataset[idx][2]}
+     return torch.DoubleTensor{opt.scale*dataset[idx][2]+1 }
 end
 
 function getTestSample(dataset, idx)

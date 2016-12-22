@@ -236,10 +236,13 @@ engine.hooks.onSample = function(state)
       state.sample.input:size()
   ):copy(state.sample.input)
   state.sample.input  = input
-  if state.sample.target then
+-- print("State sample target size", state.sample.target:size())
+--print("state target size", target:size()) 
+ if state.sample.target then
       target:resize( state.sample.target:size()):copy(state.sample.target)
       state.sample.target = target
   end 
+--print("state target size", target:size())
 end
 
 
@@ -252,7 +255,8 @@ engine.hooks.onForwardCriterion = function(state)
 
    
     meter:add(state.criterion.output)
-    -- clerr:add(state.network.output, state.sample.target)
+--    print("Input size ", state.sample.input:size())
+    clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 

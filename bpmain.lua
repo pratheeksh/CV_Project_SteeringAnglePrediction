@@ -26,18 +26,6 @@ testDir = [[data_/test_center/]]
 
 
 local END = 12
-for file in lfs.dir(trainDir) do
-    --if lfs.attributes(file,"mode") == "file" then 
-    -- print(file,string.sub(file,0,END))
-    name = string.sub(file,1,END)
-    --end
-    names[name] = file
-end
-
-for file in lfs.dir(testDir) do
-    name = string.sub(file,1,END)
-    test_names[name] = file
-end
 
 -- torch.save('names.t7',names)
 
@@ -55,14 +43,13 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 128,128 -- 320,140
+local WIDTH, HEIGHT = 320, 140 -- 128,128 -- 320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
 torch.setdefaulttensortype('torch.DoubleTensor')
 
 torch.manualSeed(opt.manualSeed)
-
 
 print("Parallel Iterator option ", opt.p)
 if opt.p == true then 
@@ -87,7 +74,6 @@ if opt.p == true then
 else
    print("Loading normal Iterator") 
    function getIterator(dataset)
-   
 	return  tnt.DatasetIterator{
 	    	dataset =  tnt.ShuffleDataset{        
 			dataset = tnt.BatchDataset{
@@ -132,7 +118,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.MSECriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
@@ -144,14 +130,14 @@ criterion:cuda()
 local meters = {
    val = tnt.AverageValueMeter(),
    train = tnt.AverageValueMeter(),
-   clerr = tnt.ClassErrorMeter{topk = {1},accuracy=true},
+  -- clerr = tnt.ClassErrorMeter{topk = {1},accuracy=true},
    ap = tnt.APMeter(),
 }
 
 function meters:reset()
    self.val:reset()
    self.train:reset()
-   self.clerr:reset()
+--   self.clerr:reset()
    self.ap:reset()
 end
 -- Support functions
@@ -192,7 +178,8 @@ engine.hooks.onSample = function(state)
   if state.sample.target then
       target:resize( state.sample.target:size()):copy(state.sample.target)
       state.sample.target = target
-  end 
+     print("State sample target size ", state.sample.target:size())
+  end   
 end
 
 
@@ -205,7 +192,16 @@ engine.hooks.onForwardCriterion = function(state)
 
    
     meter:add(state.criterion.output)
-    -- clerr:add(state.network.output, state.sample.target)
+
+print("target type", type(state.sample.target))
+    print("output type", type(state.network.output))
+
+    print("target size", state.sample.target:size())
+    print("output size", state.network.output:size())
+
+ print("target size values", state.sample.target)
+    print("output size values ", state.network.output)
+    clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 
@@ -272,8 +268,6 @@ error_out:close()
 local submission = assert(io.open(opt.logDir .. "/submission.csv", "w"))
 submission:write("Filename,ClassId\n")
 batch = 1
-
-
 engine.hooks.onForward = function(state)
     local fileNames  = state.sample.sampleId
     local pred = state.network.output
@@ -283,6 +277,7 @@ engine.hooks.onForward = function(state)
     xlua.progress(batch, dataSize)
     batch = batch + 1
 end
+
 
 engine.hooks.onEnd = function(state)
     -- Plotting stuff
