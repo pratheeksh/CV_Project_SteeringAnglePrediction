@@ -71,6 +71,6 @@ model:add(nn.Linear(64*25*25, 1))
 model:cuda()
 input = torch.CudaTensor(16,3,128,128)
 out = model:forward(input)                        
-print(out:size())
+--print(out:size())
 return model
 

@@ -43,7 +43,7 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 320, 140 -- 128,128 -- 320,140
+local WIDTH, HEIGHT = 320, 160 -- 128,128 -- 320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
@@ -103,12 +103,18 @@ trainDataset = tnt.SplitDataset{
     }
 }
 
+function getSampleId(dataset, idx)
+        file = string.format("%19d", dataset[idx])
+        chopped =  string.sub(test_names[string.sub(file,1,12)], 1, 19)
+        return chopped
+        --return torch.LongTensor{tonumber(chopped)}
+end
 testDataset = tnt.ListDataset{
     list = torch.range(1, testData:size(1)):long(),
     load = function(idx)
         return {
             input = getTestSample(testData, idx),
-            sampleId = torch.LongTensor{testData[idx]}
+            sampleId = getSampleId(testData, idx) --torch.LongTensor{testData[idx]}
         }
     end
 }
@@ -118,7 +124,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
@@ -178,7 +184,7 @@ engine.hooks.onSample = function(state)
   if state.sample.target then
       target:resize( state.sample.target:size()):copy(state.sample.target)
       state.sample.target = target
-     print("State sample target size ", state.sample.target:size())
+--     print("State sample target size ", state.sample.target:size())
   end   
 end
 
@@ -192,16 +198,17 @@ engine.hooks.onForwardCriterion = function(state)
 
    
     meter:add(state.criterion.output)
-
-print("target type", type(state.sample.target))
+ --[[
+    print("target type", type(state.sample.target))
     print("output type", type(state.network.output))
 
     print("target size", state.sample.target:size())
     print("output size", state.network.output:size())
 
  print("target size values", state.sample.target)
-    print("output size values ", state.network.output)
-    clerr:add(state.network.output, state.sample.target)
+    print("output size values ", state.network.output) 
+   --]] 
+   --clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 
@@ -243,6 +250,7 @@ while epoch <= opt.nEpochs do
         maxepoch = 1,
         config = {
             learningRate = opt.LR,
+
             --[[momentum = opt.momentum,
 		learningRateDecay = .01,
 		weightDecay = .001--]]

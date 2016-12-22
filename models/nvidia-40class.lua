@@ -49,10 +49,10 @@ end
   cnn:add(nn.Linear(100, 50))
   cnn:add(nn.ReLU())
   cnn:add(nn.Linear(50,40))
-  cnn:add(nn.Tanh())
-  --cnn:add(nn.Linear(10,1))
-  --cnn:add(nn.LogSoftMax())
-  cnn:add(nn.Linear(40, 1))
+  --cnn:add(nn.Tanh())
+  --cnn:add(nn.Linear(40,1))
+--  cnn:add(nn.LogSoftMax())
+  --cnn:add(nn.Linear(40, 1))
 -- -- end
 
 -- local conv1 = getconv(3, 100)
@@ -70,9 +70,9 @@ end
 -- -- model:add(ReLU())
 -- -- model:add(Linear(300, 43))
 print(cnn)--]]
-input = torch.Tensor(1,3,320,140)
+input = torch.rand(16,3,320,140)
 -- input = torch.Tensor(1,1,320,140)
 out = cnn:forward(input)                        
-print("output size ", out:size())
+--print("output size ", out:size())
 --print(out)
 return cnn
