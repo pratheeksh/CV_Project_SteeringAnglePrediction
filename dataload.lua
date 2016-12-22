@@ -10,7 +10,7 @@ torch.setdefaulttensortype('torch.DoubleTensor')
 
 names = {}
 test_names =  {}
-trainDataPath = "data_/csv/center.csv"
+trainDataPath = "data_/csv/centerclasses.csv"
 testDataPath = "data_/csv/test_center.csv"
 trainDir =  [[data_/train_images_center/]]
 testDir = [[data_/test_center/]]
