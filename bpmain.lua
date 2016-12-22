@@ -64,8 +64,9 @@ torch.setdefaulttensortype('torch.DoubleTensor')
 torch.manualSeed(opt.manualSeed)
 
 function resize(img)
-    modimg = img[{{},{200,480},{}}]
-    return image.scale(modimg,WIDTH,HEIGHT)
+--    modimg = img[{{},{200,480},{}}]
+  print("Image size", img:size())  
+  return image.scale(modimg,WIDTH,HEIGHT)
 end
 function yuv(img)
     return image.rgb2yuv(img)
@@ -179,7 +180,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.MSECriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()

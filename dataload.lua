@@ -26,10 +26,19 @@ for file in lfs.dir(testDir) do
     test_names[name] = file
 end
 
+
+count = 0
 function  resize(img)
-    modimg = img[{{},{200,480},{}}]
-    return image.scale(modimg,WIDTH,HEIGHT)
+--   print("image size", img:size())
+   -- image.save('images/original' ..count .. '.png', img)
+    modimg = img[{{},{100,480},{}}]
+   -- image.save('images/resized' ..count ..'.png', modimg)
+--   print("image size", modimg:size())  
+--image.display(modimg)
+count = count + 1
+  return image.scale(modimg,WIDTH,HEIGHT)
 end
+
 function yuv(img)
     return image.rgb2yuv(img)
 end
@@ -45,9 +54,9 @@ function norm(img)
 end
 function transformInput(inp)
     f = tnt.transform.compose{
-        [1] = resize,
-        [2] = yuv,
-        [3] = norm
+        [1] = resize
+     --   [2] = yuv,
+       -- [3] = norm
     }
     -- image.display(f(inp))
     return f(inp)
@@ -57,15 +66,13 @@ function getTrainSample(dataset, idx)
     r = dataset[idx]
     file = string.format("%19d.jpg", r[1])
     name = string.sub(file,1,END)
-    if names[name] == nil then
-        names[name] =  '1479425800143702153.jpg'
-    end
-    --print(file,names[name],name)
+       --print(file,names[name],name)
     return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
 end
 
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
+--     print(dataset[idx][2])
         return torch.DoubleTensor{opt.scale*dataset[idx][2]}
 end
 
