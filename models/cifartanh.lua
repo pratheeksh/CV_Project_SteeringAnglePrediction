@@ -25,4 +25,5 @@ model:add(Tanh())
 model:add(Dropout(0.5))
 model:add(Linear(64, 1))
 -- model:cuda()
+print(model)
 return model
