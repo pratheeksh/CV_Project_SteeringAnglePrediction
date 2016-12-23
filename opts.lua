@@ -7,7 +7,7 @@ function M.parse(arg)
     cmd:text()
     cmd:text('Options:')
     cmd:option('-data',             '',             'Path to dataset')
-    cmd:option('-val',              10,             'Percentage to use for validation set')
+    cmd:option('-val',              0.1,             'Percentage to use for validation set')
     cmd:option('-nEpochs',          300,            'Maximum epochs')
     cmd:option('-batchsize',        128,            'Batch size for epochs')
     cmd:option('-nThreads',         1,              'Number of dataloading threads')
@@ -22,6 +22,9 @@ function M.parse(arg)
     cmd:option('-imageSize', 128, 'Image Size') 
     cmd:option('-output' , 'Trail1', 'OutputFilenane')
     cmd:option('-scale', 1, 'Scaling factor')
+    cmd:option('-reweight', false, 'Resample or not')
+    cmd:option('-yuv',false, 'rgb2yuv')
+    cmd:option('-hsv',false, 'rgb2hsv')
      --[[
     -- Hint: Use this option to convert your code to use GPUs
     --]]

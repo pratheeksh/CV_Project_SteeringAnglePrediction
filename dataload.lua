@@ -49,6 +49,11 @@ count = count + 1
   return image.scale(modimg,WIDTH,HEIGHT)
 end
 
+function hsv(img) 
+	return image.rgb2hsv(img)
+end
+
+
 function yuv(img)
     return image.rgb2yuv(img)
 end
@@ -74,6 +79,7 @@ end
 
 function getTrainSample(dataset, idx)
     r = dataset[idx]
+--    print(r)
     file = string.format("%19d.jpg", r[1])
     name = string.sub(file,1,END)
        --print(file,names[name],name)
@@ -93,3 +99,10 @@ function getTestSample(dataset, idx)
     return transformInput(image.load(file_name))
 end
 
+
+function getSampleId(dataset, idx)
+        file = string.format("%19d", dataset[idx])
+        chopped =  string.sub(test_names[string.sub(file,1,12)], 1, 19)
+        return chopped
+        --return torch.LongTensor{tonumber(chopped)}
+end

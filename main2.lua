@@ -37,7 +37,7 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 128,128 -- 320,140
+local WIDTH, HEIGHT = 320,140 -- 128,128 -- 320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 torch.setdefaulttensortype('torch.DoubleTensor')

@@ -56,10 +56,12 @@ if opt.p == true then
    print("Loading parallel data set iterator")
    function getIterator(dataset) 
 	local lopt = opt
+	local lbias = bias
  	return tnt.ParallelDatasetIterator{
 		nthread = opt.nThreads, 
 		init = function()	
 			opt = lopt
+			bias = lbias
 			require 'torchnet'
 			assert(loadfile("dataload.lua"))(opt)
 		end,
@@ -73,6 +75,7 @@ if opt.p == true then
    end 
 else
    print("Loading normal Iterator") 
+   assert(loadfile("dataload.lua"))(opt)  
    function getIterator(dataset)
 	return  tnt.DatasetIterator{
 	    	dataset =  tnt.ShuffleDataset{        
@@ -85,11 +88,90 @@ else
    end
 end
 
+--[[
+function getTrainSample(dataset, idx)
+    r = dataset[idx]
+    file = string.format("%19d.jpg", r[1])
+    name = string.sub(file,1,END)
+       --print(file,names[name],name)
+    return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
+end
 
+function getTrainLabel(dataset, idx)
+    -- return torch.LongTensor{dataset[idx][9] + 1}
+--     print(dataset[idx][2
+--]]
+assert(loadfile("dataload.lua"))(opt)
+
+local listData = tnt.ListDataset{
+    list = torch.range(1, trainData:size(1)):long(), 
+    load = function(idx)
+        return {
+            input = getTrainSample(trainData, idx),
+            target = getTrainLabel(trainData, idx)
+        }
+    end
+}
+
+
+local shuffledData = tnt.ShuffleDataset{
+    dataset = listData
+}
+
+if opt.reweight == true then
+    print('Computing class probabilities and uniform lists')
+    -- class probabilities
+    local classCounts = torch.zeros(40)
+    
+    classTables = {}
+    for i = 1, 40 do
+        classTables[i] = {}
+    end
+--    print(classTables[1])
+  --  table.insert(classTables[1], 1)    
+    for i = 1, trainData:size(1) do
+
+        if i <= torch.floor(shuffledData:size() * (1.0 - opt.val)) then
+            sample = shuffledData:get(i)
+	    angleclass = torch.ceil((sample.target[1] + 2.4) * 100) % 40 + 1
+ --	    print(sample.target[1], angleclass)
+            table.insert(classTables[angleclass], i)
+            classCounts[angleclass] = classCounts[angleclass] + 1
+        end
+    end
+    classProbs = classCounts / classCounts:sum()
+
+    -- the bias towards uniform distribution.
+    -- 1: uniform distribution, 0: data distribution
+    bias = 1.0
+else
+    bias = 0.0
+end
+
+print("Printing class labels", classTables)
+if opt.reweight == true then
+    shuffledData = tnt.ResampleDataset{
+        dataset = shuffledData,
+        sampler = function(dataset, idx)
+            -- in SplitDataset, the partition names are sorted, and val comes after train.
+            -- the last 0.1 of the dataset belongs to val, so we don't do resampling there.
+            if torch.rand(1)[1] < 1 - bias or
+                   idx > torch.floor(dataset:size() * (1.0 - opt.val)) then
+                return idx
+            end
+        	random_num = torch.random(1,40)  
+--		print("ranom num", random_num)  
+ 		chooser = classTables[random_num]
+	  return chooser[torch.random(1, #chooser)]
+        end,
+        size = shuffledData:size()
+    }
+end
+
+if opt.reweight == false then 
 trainDataset = tnt.SplitDataset{
-    partitions = {train=0.9, val=0.1},
-    initialpartition = 'train',
-   
+    partitions = {train=0.9 , val=0.1},
+    initialpartition = 'train',  
     dataset = tnt.ShuffleDataset{
         dataset = tnt.ListDataset{
             list = torch.range(1, trainData:size(1)):long(),
@@ -102,6 +184,17 @@ trainDataset = tnt.SplitDataset{
         }
     }
 }
+else 
+
+print("Printing shuffledData", shuffledData)
+
+trainDataset = tnt.SplitDataset{
+    partitions = {train=1.0-opt.val, val=opt.val},
+    initialpartition = 'train',
+    dataset = shuffledData
+}
+end
+
 
 function getSampleId(dataset, idx)
         file = string.format("%19d", dataset[idx])
@@ -170,6 +263,11 @@ engine.hooks.onStart = function(state)
         dataSize = state.iterator:execSingle('size')
     else
         dataSize = state.iterator:exec('size')
+    end
+
+    if opt.reweight == true then
+      --  bias = (opt.reweightEnd - epoch) / (opt.reweightEnd - opt.reweightStart)
+        bias = 0.2 -- math.max(0, math.min(1, bias))
     end
 end
 
@@ -273,14 +371,15 @@ while epoch <= opt.nEpochs do
 end
 
 error_out:close()
-local submission = assert(io.open(opt.logDir .. "/submission.csv", "w"))
+local submission = assert(io.open(opt.logDir .. "/" .. opt.output ..".csv", "w"))
 submission:write("Filename,ClassId\n")
 batch = 1
 engine.hooks.onForward = function(state)
     local fileNames  = state.sample.sampleId
     local pred = state.network.output
     for i = 1, pred:size(1) do
-        submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
+	submission:write(fileNames[i]..','..string.format("%f\n", pred[i][1]))
+      --  submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
     end
     xlua.progress(batch, dataSize)
     batch = batch + 1
@@ -298,5 +397,5 @@ engine:test{
     iterator = getIterator(testDataset)
 }
 
-torch.save('resnet-e50-lr001.t7',model)
+torch.save('resnet-e50-lr001.t7',model:clearState())
 print("The End!")

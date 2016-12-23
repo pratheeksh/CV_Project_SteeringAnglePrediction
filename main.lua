@@ -64,10 +64,11 @@ torch.setdefaulttensortype('torch.DoubleTensor')
 torch.manualSeed(opt.manualSeed)
 
 function resize(img)
-    modimg = img[{{},{200,480},{}}]
+    modimg = img[{{},{100,480},{}}]
     return image.scale(modimg,WIDTH,HEIGHT)
 end
-function yuv(img)
+function colorchange(img)
+
     return image.rgb2yuv(img)
 end
 
@@ -84,7 +85,7 @@ end
 function transformInput(inp)
     f = tnt.transform.compose{
         [1] = resize,
-	[2] = yuv,
+	[2] = colorchange,
 	[3] = norm
     }
     -- image.display(f(inp))
@@ -164,12 +165,18 @@ trainDataset = tnt.SplitDataset{
     }
 }
 
+function getSampleId(dataset, idx)
+        file = string.format("%19d", dataset[idx])
+        chopped =  string.sub(test_names[string.sub(file,1,12)], 1, 19)
+        return chopped
+        --return torch.LongTensor{tonumber(chopped)}
+end
 testDataset = tnt.ListDataset{
     list = torch.range(1, testData:size(1)):long(),
     load = function(idx)
         return {
             input = getTestSample(testData, idx),
-            sampleId = torch.LongTensor{testData[idx]}
+            sampleId = getSampleId(testData, idx)
         }
     end
 }
@@ -256,7 +263,7 @@ engine.hooks.onForwardCriterion = function(state)
    
     meter:add(state.criterion.output)
 --    print("Input size ", state.sample.input:size())
-    clerr:add(state.network.output, state.sample.target)
+    -- clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 
@@ -329,7 +336,8 @@ engine.hooks.onForward = function(state)
     local fileNames  = state.sample.sampleId
     local pred = state.network.output
     for i = 1, pred:size(1) do
-        submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
+ submission:write(fileNames[i]..','..string.format("%f\n", pred[i][1]))
+        --submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
     end
     xlua.progress(batch, dataSize)
     batch = batch + 1
@@ -346,5 +354,5 @@ engine:test{
     iterator = getIterator(testDataset)
 }
 
-torch.save('resnet-e50-lr001.t7',model)
+torch.save('resnet-e50-lr001.t7',model:clearState())
 print("The End!")
