@@ -20,6 +20,7 @@ if  string.find(opt.model, 'rambo') ~= nil  then
 	trainDataPath = "data_/csv/center.csv"
 end
 
+
 if string.find(opt.model, 'class') ~= nil then 
 -- print("Some classification stuff")
 	trainDataPath = "data_/csv/centerclasses.csv"
@@ -80,12 +81,24 @@ function norm(img)
         -- print(torch.min(new))--]]
         return img
 end
+function addNoise(original_image)
+    local rand_angle = (torch.uniform(-.2,.2))
+    local rand_position_x = (torch.randn(1)*20)[1]
+    local rand_position_y = (torch.randn(1)*20)[1]
+    image_data = original_image:clone()
+    image_data = image.rotate(image_data, rand_angle)
+    image_data = image.translate(image_data, rand_position_x, rand_position_y)
+    return image_data
+end
 function transformInput(inp)
     f = tnt.transform.compose{
         [1] = resize,
        [2] = colortransform,
        -- [3] = norm
     }
+    --[[if opt.noise or torch.random(0,1) < 1 then
+        inp = addNoise(inp)
+    end --]]   
     -- image.display(f(inp))
     return f(inp)
 end

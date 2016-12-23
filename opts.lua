@@ -26,6 +26,7 @@ function M.parse(arg)
     cmd:option('-t', 'rgb', 'Color trasnform')
     cmd:option('-yuv',false, 'rgb2yuv')
     cmd:option('-hsv',false, 'rgb2hsv')
+    cmd:option('-noise',false,'adds trans and rot noise')
      --[[
     -- Hint: Use this option to convert your code to use GPUs
     --]]

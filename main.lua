@@ -55,25 +55,23 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
+if opt.noise then
+	print("RUNNING WITH NOISE")
+end
 local WIDTH, HEIGHT = 128, 128 -- 320,140
+if  string.find(opt.model, 'nvidia') ~= nil  then 
+	WIDTH, HEIGHT =  320, 140
+end
+if  string.find(opt.model, 'rambo') ~= nil  then
+        WIDTH, HEIGHT =  320, 160
+	trainDataPath = "data_/csv/center.csv"
+end
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
 torch.setdefaulttensortype('torch.DoubleTensor')
 
 torch.manualSeed(opt.manualSeed)
-
-function addNoise(original_image)
-    l = dataset:size()
-    local rand_angle = (torch.uniform(-.2,.2))[1]
-    local rand_position_x = (torch.randn(1)*2)[1]
-    local rand_position_y = (torch.randn(1)*2)[1]
-    image_data = original_image:clone()
-    image_data = image.rotate(image_data, rand_angle)
-    image_data = image.translate(image_data, rand_position_x, rand_position_y)
-    return image_data
-
-end
 
 function resize(img)
     modimg = img[{ {}, { 100, 480 }, {} }]
@@ -103,8 +101,9 @@ function transformInput(inp)
         [3] = norm
     }
     -- image.display(f(inp))
-    if torch.randn(1) > .5 then
+    --[[if torch.random(0,1) < 1 then
         inp = addNoise(inp)
+    end --]]   
     return f(inp)
 end
 
@@ -279,10 +278,6 @@ engine.hooks.onForwardCriterion = function(state)
 
     meter:add(state.criterion.output)
 
-    image.display(state.sample.input)
-        print(model:forward(state.sample.input))
-        print(state.criterion.output)
-        sleep(10)
     --    print("Input size ", state.sample.input:size())
     -- clerr:add(state.network.output, state.sample.target)
     --[[if mode == 'Val' then
