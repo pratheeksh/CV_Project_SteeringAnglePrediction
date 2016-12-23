@@ -4,16 +4,16 @@ require 'optim'
 require 'os'
 require 'optim'
 require 'xlua'
-require'lfs'
+require 'lfs'
 require 'utils'
 require "socket"
 
 names = {}
-test_names =  {}
+test_names = {}
 
 --[[ Adding data paths --]]
 
-trainDataPath = "/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/center.csv" 
+trainDataPath = "/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/center.csv"
 testDataPath = "/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/csv/test_center.csv"
 trainDir = [[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/train_images_center/]]
 testDir = [[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/test_center/]]
@@ -22,7 +22,7 @@ testDir = [[/home/pratheeksha/CV_Project_SteeringAnglePrediction/data_/test_cent
 
 trainDataPath = "data_/csv/center.csv"
 testDataPath = "data_/csv/test_center.csv"
-trainDir =  [[data_/train_images_center/]]
+trainDir = [[data_/train_images_center/]]
 testDir = [[data_/test_center/]]
 
 
@@ -30,13 +30,13 @@ local END = 12
 for file in lfs.dir(trainDir) do
     --if lfs.attributes(file,"mode") == "file" then 
     -- print(file,string.sub(file,0,END))
-    name = string.sub(file,1,END)
+    name = string.sub(file, 1, END)
     --end
     names[name] = file
 end
 
 for file in lfs.dir(testDir) do
-    name = string.sub(file,1,END)
+    name = string.sub(file, 1, END)
     test_names[name] = file
 end
 
@@ -47,8 +47,7 @@ require 'cudnn' -- faster convolutions
 
 local csv2tensor = require 'csv2tensor'
 local os = require 'os'
-local math  = require 'math'
-local trainData, column_names = csv2tensor.load(trainDataPath) 
+local trainData, _ = csv2tensor.load(trainDataPath)
 
 local testData = csv2tensor.load(testDataPath)
 local tnt = require 'torchnet'
@@ -56,7 +55,7 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 128,128 -- 320,140
+local WIDTH, HEIGHT = 128, 128 -- 320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
@@ -64,101 +63,116 @@ torch.setdefaulttensortype('torch.DoubleTensor')
 
 torch.manualSeed(opt.manualSeed)
 
-function resize(img)
-    modimg = img[{{},{100,480},{}}]
-    return image.scale(modimg,WIDTH,HEIGHT)
+function addNoise(original_image)
+    l = dataset:size()
+    local rand_angle = (torch.uniform(-.2,.2))[1]
+    local rand_position_x = (torch.randn(1)*2)[1]
+    local rand_position_y = (torch.randn(1)*2)[1]
+    image_data = original_image:clone()
+    image_data = image.rotate(image_data, rand_angle)
+    image_data = image.translate(image_data, rand_position_x, rand_position_y)
+    return image_data
+
 end
+
+function resize(img)
+    modimg = img[{ {}, { 100, 480 }, {} }]
+    return image.scale(modimg, WIDTH, HEIGHT)
+end
+
 function colorchange(img)
 
     return image.rgb2yuv(img)
 end
 
 function norm(img)
-	--[[maxer = torch.max(img)
-	miner = torch.min(img)
-	new = img	
-	new = new - torch.mean(new)
-	new = new/math.max(maxer,-1*miner)
-	-- print(torch.max(new))
-	-- print(torch.min(new))--]]
-	return img
+    --[[maxer = torch.max(img)
+    miner = torch.min(img)
+    new = img
+    new = new - torch.mean(new)
+    new = new/math.max(maxer,-1*miner)
+    -- print(torch.max(new))
+    -- print(torch.min(new))--]]
+    return img
 end
+
 function transformInput(inp)
-    f = tnt.transform.compose{
+    f = tnt.transform.compose {
         [1] = resize,
-	[2] = colorchange,
-	[3] = norm
+        [2] = colorchange,
+        [3] = norm
     }
     -- image.display(f(inp))
+    if torch.randn(1) > .5 then
+        inp = addNoise(inp)
     return f(inp)
 end
 
 function getTrainSample(dataset, idx)
     r = dataset[idx]
     file = string.format("%19d.jpg", r[1])
-    name = string.sub(file,1,END)
+    name = string.sub(file, 1, END)
     --print(file,names[name],name)
-    return transformInput(image.load(DATA_PATH .. 'train_images_center/'..names[name]))
+    return transformInput(image.load(DATA_PATH .. 'train_images_center/' .. names[name]))
 end
 
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
-     return torch.DoubleTensor{opt.scale*dataset[idx][2]}
+    return torch.DoubleTensor { opt.scale * dataset[idx][2] }
 end
 
 function getTestSample(dataset, idx)
     file = string.format("%19d.jpg", dataset[idx])
-    name = string.sub(file,1,END)	
+    name = string.sub(file, 1, END)
     file_name = DATA_PATH .. "/test_center/" .. test_names[name]
     return transformInput(image.load(file_name))
 end
 
 print("Parallel Iterator option ", opt.p)
-if opt.p == true then 
-   print("Loading parallel data set iterator")
-   function getIterator(dataset) 
-	local lopt = opt
- 	return tnt.ParallelDatasetIterator{
-		nthread = opt.nThreads, 
-		init = function()	
-			opt = lopt
-			require 'torchnet'
-			assert(loadfile("dataload.lua"))(opt)
-		end,
-		closure = function()
-			return  tnt.BatchDataset {
-				batchsize = opt.batchsize,
-				dataset = dataset
-			}
-		end
-	}
-   end 
+if opt.p == true then
+    print("Loading parallel data set iterator")
+    function getIterator(dataset)
+        local lopt = opt
+        return tnt.ParallelDatasetIterator {
+            nthread = opt.nThreads,
+            init = function()
+                opt = lopt
+                require 'torchnet'
+                assert(loadfile("dataload.lua"))(opt)
+            end,
+            closure = function()
+                return tnt.BatchDataset {
+                    batchsize = opt.batchsize,
+                    dataset = dataset
+                }
+            end
+        }
+    end
 else
-   print("Loading normal Iterator") 
-   function getIterator(dataset)
-   
-	return  tnt.DatasetIterator{
-	    	dataset =  tnt.ShuffleDataset{        
-			dataset = tnt.BatchDataset{
-            			batchsize = opt.batchsize,
-           			dataset = dataset
-        		}
-    		}
-	}
-   end
+    print("Loading normal Iterator")
+    function getIterator(dataset)
+
+        return tnt.DatasetIterator {
+            dataset = tnt.ShuffleDataset {
+                dataset = tnt.BatchDataset {
+                    batchsize = opt.batchsize,
+                    dataset = dataset
+                }
+            }
+        }
+    end
 end
 
 
-trainDataset = tnt.SplitDataset{
-    partitions = {train=0.9, val=0.1},
+trainDataset = tnt.SplitDataset {
+    partitions = { train = 0.9, val = 0.1 },
     initialpartition = 'train',
-   
-    dataset = tnt.ShuffleDataset{
-        dataset = tnt.ListDataset{
+    dataset = tnt.ShuffleDataset {
+        dataset = tnt.ListDataset {
             list = torch.range(1, trainData:size(1)):long(),
             load = function(idx)
                 return {
-                    input =  getTrainSample(trainData, idx),
+                    input = getTrainSample(trainData, idx),
                     target = getTrainLabel(trainData, idx)
                 }
             end
@@ -167,12 +181,13 @@ trainDataset = tnt.SplitDataset{
 }
 
 function getSampleId(dataset, idx)
-        file = string.format("%19d", dataset[idx])
-        chopped =  string.sub(test_names[string.sub(file,1,12)], 1, 19)
-        return chopped
-        --return torch.LongTensor{tonumber(chopped)}
+    file = string.format("%19d", dataset[idx])
+    chopped = string.sub(test_names[string.sub(file, 1, 12)], 1, 19)
+    return chopped
+    --return torch.LongTensor{tonumber(chopped)}
 end
-testDataset = tnt.ListDataset{
+
+testDataset = tnt.ListDataset {
     list = torch.range(1, testData:size(1)):long(),
     load = function(idx)
         return {
@@ -184,12 +199,12 @@ testDataset = tnt.ListDataset{
 
 
 
-local model = require("models/".. opt.model)
+local model = require("models/" .. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.SmoothL1Criterion() -- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
-local clerr = tnt.ClassErrorMeter{topk = {1}}
+local clerr = tnt.ClassErrorMeter { topk = { 1 } }
 local timer = tnt.TimeMeter()
 local batch = 1
 model:cuda()
@@ -197,24 +212,26 @@ criterion:cuda()
 
 
 local meters = {
-   val = tnt.AverageValueMeter(),
-   train = tnt.AverageValueMeter(),
-   clerr = tnt.ClassErrorMeter{topk = {1},accuracy=true},
-   ap = tnt.APMeter(),
+    val = tnt.AverageValueMeter(),
+    train = tnt.AverageValueMeter(),
+    clerr = tnt.ClassErrorMeter { topk = { 1 }, accuracy = true },
+    ap = tnt.APMeter(),
 }
 
 function meters:reset()
-   self.val:reset()
-   self.train:reset()
-   self.clerr:reset()
-   self.ap:reset()
+    self.val:reset()
+    self.train:reset()
+    self.clerr:reset()
+    self.ap:reset()
 end
+
 -- Support functions
 local clock = os.clock
-function sleep(n)  -- seconds
-  local t0 = clock()
-  while clock() - t0 <= n do end
+function sleep(n) -- seconds
+    local t0 = clock()
+    while clock() - t0 <= n do end
 end
+
 -- end
 -- print(model)
 
@@ -229,7 +246,7 @@ engine.hooks.onStart = function(state)
     else
         mode = 'Val'
     end
-   if opt.p == true then
+    if opt.p == true then
         dataSize = state.iterator:execSingle('size')
     else
         dataSize = state.iterator:exec('size')
@@ -237,50 +254,53 @@ engine.hooks.onStart = function(state)
 end
 
 
-local input  = torch.CudaTensor()
+local input = torch.CudaTensor()
 local target = torch.CudaTensor()
 engine.hooks.onSample = function(state)
-  input:resize( 
-      state.sample.input:size()
-  ):copy(state.sample.input)
-  state.sample.input  = input
--- print("State sample target size", state.sample.target:size())
---print("state target size", target:size()) 
- if state.sample.target then
-      target:resize( state.sample.target:size()):copy(state.sample.target)
-      state.sample.target = target
-  end 
---print("state target size", target:size())
+    input:resize(state.sample.input:size()):copy(state.sample.input)
+    state.sample.input = input
+    -- print("State sample target size", state.sample.target:size())
+    --print("state target size", target:size())
+    if state.sample.target then
+        target:resize(state.sample.target:size()):copy(state.sample.target)
+        state.sample.target = target
+    end
+    --print("state target size", target:size())
 end
 
 
 engine.hooks.onForwardCriterion = function(state)
     if state.training then
-	meters.train:add(state.criterion.output)
+        meters.train:add(state.criterion.output)
     else
         meters.val:add(state.criterion.output)
     end
 
-   
+
     meter:add(state.criterion.output)
---    print("Input size ", state.sample.input:size())
+
+    image.display(state.sample.input)
+        print(model:forward(state.sample.input))
+        print(state.criterion.output)
+        sleep(10)
+    --    print("Input size ", state.sample.input:size())
     -- clerr:add(state.network.output, state.sample.target)
-    	--[[if mode == 'Val' then 
-		print(state.network.output:cat(state.sample.target),1)
-	end--]] 
-	--[[ print(model:getParameters()) --:forward(state.sample.input))
-	if mode == 'Val' then 
-		-- image.display(state.sample.input)
-		print(model:forward(state.sample.input))
-		print(state.criterion.output)
-		sleep(5)
-	end--]]
--- THINGS TO CHECK 
--- END
+    --[[if mode == 'Val' then
+    print(state.network.output:cat(state.sample.target),1)
+end--]]
+    --[[ print(model:getParameters()) --:forward(state.sample.input))
+    if mode == 'Val' then
+        -- image.display(state.sample.input)
+        print(model:forward(state.sample.input))
+        print(state.criterion.output)
+        sleep(5)
+    end--]]
+    -- THINGS TO CHECK
+    -- END
 
     if opt.verbose == true then
         print(string.format("%s Batch: %d/%d; avg. loss: %2.4f; avg. error: %2.4f",
-                mode, batch, dataSize, meter:value() ,clerr:value{k = 1}))
+            mode, batch, dataSize, meter:value(), clerr:value { k = 1 }))
     else
         xlua.progress(batch, dataSize)
     end
@@ -290,15 +310,15 @@ end
 
 engine.hooks.onEnd = function(state)
     print(string.format("%s: avg. loss: %2.4f; avg. error: %2.4f, time: %2.4f",
-    mode, meter:value(), clerr:value{k = 1}, timer:value()))
+        mode, meter:value(), clerr:value { k = 1 }, timer:value()))
 end
 
 local epoch = 1
-local error_out = assert(io.open("outputs/".. opt.output .. "errors.csv", "w"))
+local error_out = assert(io.open("outputs/" .. opt.output .. "errors.csv", "w"))
 while epoch <= opt.nEpochs do
     meters:reset()
     trainDataset:select('train')
-    engine:train{
+    engine:train {
         network = model,
         criterion = criterion,
         iterator = getIterator(trainDataset),
@@ -314,30 +334,30 @@ while epoch <= opt.nEpochs do
     trainloss = meters.train:value()
     logs.train_loss[#logs.train_loss + 1] = meters.train:value()
     trainDataset:select('val')
-    engine:test{
+    engine:test {
         network = model,
         criterion = criterion,
         iterator = getIterator(trainDataset)
     }
-    logs.val_loss[#logs.val_loss+ 1] = meters.val:value()
+    logs.val_loss[#logs.val_loss + 1] = meters.val:value()
     valloss = meters.val:value()
     error_out:write(trainloss .. ' ' .. valloss .. ' \n')
-    print('Done with Epoch '..tostring(epoch))
---    print(logs.val_loss)
+    print('Done with Epoch ' .. tostring(epoch))
+    --    print(logs.val_loss)
     epoch = epoch + 1
 end
 
 error_out:close()
-local submission = assert(io.open(opt.logDir .. "/submission"..string.format("%d",socket.gettime()*1000)..".csv", "w"))
-submission:write("Model:" ..opt.model .. ",LR:"..string.format("%f", opt.LR).. ",nEpochs:"..string.format("%d", opt.nEpochs)..",BatchSize:"..string.format("%d", opt.batchsize).." \n")
+local submission = assert(io.open(opt.logDir .. "/submission" .. string.format("%d", socket.gettime() * 1000) .. ".csv", "w"))
+submission:write("Model:" .. opt.model .. ",LR:" .. string.format("%f", opt.LR) .. ",nEpochs:" .. string.format("%d", opt.nEpochs) .. ",BatchSize:" .. string.format("%d", opt.batchsize) .. " \n")
 batch = 1
 
 
 engine.hooks.onForward = function(state)
-    local fileNames  = state.sample.sampleId
+    local fileNames = state.sample.sampleId
     local pred = state.network.output
     for i = 1, pred:size(1) do
- submission:write(fileNames[i]..','..string.format("%f\n", pred[i][1]))
+        submission:write(fileNames[i] .. ',' .. string.format("%f\n", pred[i][1]))
         --submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
     end
     xlua.progress(batch, dataSize)
@@ -350,10 +370,10 @@ engine.hooks.onEnd = function(state)
     submission:close()
 end
 
-engine:test{
+engine:test {
     network = model,
     iterator = getIterator(testDataset)
 }
 
-torch.save(opt.model..string.format("%f", opt.LR)..'.t7',model:clearState())
+torch.save(opt.model .. string.format("%f", opt.LR) .. '.t7', model:clearState())
 print("The End!")
