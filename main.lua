@@ -329,7 +329,7 @@ end
 
 error_out:close()
 local submission = assert(io.open(opt.logDir .. "/submission"..string.format("%d",socket.gettime()*1000)..".csv", "w"))
-submission:write("Filename,ClassId\n")
+submission:write("Model:" ..opt.model .. ",LR:"..string.format("%f", opt.LR).. ",nEpochs:"..string.format("%d", opt.nEpochs)..",BatchSize:"..string.format("%d", opt.batchsize).." \n")
 batch = 1
 
 

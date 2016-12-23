@@ -22,6 +22,8 @@ count = 0
 for l in results:
 	if "Filename" in l:
 		continue
+	if "Model" in l:
+		continue
 	frame_id, angle = l[0], l[1]
 	if frame_id == "frame_id":
 		continue
