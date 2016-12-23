@@ -23,6 +23,7 @@ function M.parse(arg)
     cmd:option('-output' , 'Trail1', 'OutputFilenane')
     cmd:option('-scale', 1, 'Scaling factor')
     cmd:option('-reweight', false, 'Resample or not')
+    cmd:option('-t', 'rgb', 'Color trasnform')
     cmd:option('-yuv',false, 'rgb2yuv')
     cmd:option('-hsv',false, 'rgb2hsv')
      --[[

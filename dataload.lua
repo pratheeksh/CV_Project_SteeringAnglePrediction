@@ -54,8 +54,17 @@ function hsv(img)
 end
 
 
-function yuv(img)
-    return image.rgb2yuv(img)
+function colortransform(img)
+--	print(opt.t)
+    if (opt.t == 'rgb') then 	
+	return img
+    elseif (opt.t == 'hsv') then 
+	return image.rgb2hsv(img)
+    elseif (opt.t == 'yuv') then 
+	return image.rgb2yuv(img)
+    else 
+	return img
+     end    
 end
 function norm(img)
         --[[maxer = torch.max(img)
@@ -70,7 +79,7 @@ end
 function transformInput(inp)
     f = tnt.transform.compose{
         [1] = resize,
-       [2] = yuv,
+       [2] = colortransform,
        -- [3] = norm
     }
     -- image.display(f(inp))

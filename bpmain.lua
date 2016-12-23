@@ -246,7 +246,7 @@ function sleep(n)  -- seconds
   while clock() - t0 <= n do end
 end
 -- end
--- print(model)
+ print(model)
 
 
 engine.hooks.onStart = function(state)
@@ -397,5 +397,5 @@ engine:test{
     iterator = getIterator(testDataset)
 }
 
-torch.save('resnet-e50-lr001.t7',model:clearState())
+--torch.save('resnet-e50-lr001.t7',model:clearState())
 print("The End!")
