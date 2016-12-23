@@ -355,5 +355,5 @@ engine:test{
     iterator = getIterator(testDataset)
 }
 
-torch.save('resnet-e50-lr001.t7',model:clearState())
+torch.save(opt.model..string.format("%f", opt.LR)..'.t7',model:clearState())
 print("The End!")
