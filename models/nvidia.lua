@@ -68,7 +68,7 @@ end
 -- -- model:add(Linear(2250, 300))
 -- -- model:add(ReLU())
 -- -- model:add(Linear(300, 43))
-print(cnn)--]]
+-- print(cnn)--]]
 input = torch.Tensor(1,3,320,140)
 -- input = torch.Tensor(1,1,320,140)
 out = cnn:forward(input)                        
