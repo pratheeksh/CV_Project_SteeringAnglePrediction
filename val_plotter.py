@@ -14,7 +14,7 @@ for filename in sys.argv[1:]:
     x = range(len(train))
     assert (len(x) == len(val))
     ax.plot(x, train, label="Train Loss")
-    ax.scatter(x, val, label="Validation Loss", color='green', s=1)
+    ax.plot(x, val, label="Validation Loss", color='red')
 
-plt.legend()
+    ax.legend()
 plt.show()
