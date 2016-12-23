@@ -6,6 +6,7 @@ require 'optim'
 require 'xlua'
 require'lfs'
 require 'utils'
+require "socket"
 
 names = {}
 test_names =  {}
@@ -327,7 +328,7 @@ while epoch <= opt.nEpochs do
 end
 
 error_out:close()
-local submission = assert(io.open(opt.logDir .. "/submission.csv", "w"))
+local submission = assert(io.open(opt.logDir .. "/submission"..string.format("%d",socket.gettime()*1000)..".csv", "w"))
 submission:write("Filename,ClassId\n")
 batch = 1
 

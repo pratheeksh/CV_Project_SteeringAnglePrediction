@@ -1,8 +1,9 @@
 cd ..
-for LR in 0.00001 0.0001 0.001 0.01 0.1
+for ep in 128 64 32 16
 do
 
-qlua bpmain.lua -model rambo  -nEpochs 25 -LR $LR -p -batchsize 32 -nThreads 4 -output rambo-regression-e5-lre${LR}-bs32  | tee scripts/rambo-regression-e5-lre${LR}-bs32.log
+
+qlua bpmain.lua -model rambo  -nEpochs 25 -LR 0.0001 -p -batchsize $ep -nThreads 4 -output rambo-regression-e25-lre0001-bs${ep}  | tee scripts/rambo-regression-e25-lre0001-bs${ep}.log
 done
 
 
