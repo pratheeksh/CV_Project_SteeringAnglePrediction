@@ -1,4 +1,5 @@
 require 'torch'
+
 require 'cutorch'
 require 'optim'
 require 'os'
@@ -217,7 +218,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.CrossEntropyCriterion() --nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
@@ -306,7 +307,7 @@ engine.hooks.onForwardCriterion = function(state)
  print("target size values", state.sample.target)
     print("output size values ", state.network.output) 
    --]] 
-   --clerr:add(state.network.output, state.sample.target)
+   clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 
