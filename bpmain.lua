@@ -307,7 +307,7 @@ engine.hooks.onForwardCriterion = function(state)
  print("target size values", state.sample.target)
     print("output size values ", state.network.output) 
    --]] 
-   clerr:add(state.network.output, state.sample.target)
+--   clerr:add(state.network.output, state.sample.target)
     	--[[if mode == 'Val' then 
 		print(state.network.output:cat(state.sample.target),1)
 	end--]] 

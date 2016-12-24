@@ -6,7 +6,7 @@ local WIDTH, HEIGHT = 128,128 -- 320, 140 -- opt.imageSize, opt.imageSize
 
 names = {}
 test_names =  {}
-trainDataPath = "data_/csv/centerclasses.csv"
+trainDataPath = "data_/csv/center.csv"
 testDataPath = "data_/csv/test_center.csv"
 trainDir =  [[data_/train_images_center/]]
 testDir = [[data_/test_center/]]
@@ -14,6 +14,7 @@ testDir = [[data_/test_center/]]
 
 if  string.find(opt.model, 'nvidia') ~= nil  then 
 	WIDTH, HEIGHT =  320, 140
+	trainDataPath = "data_/csv/center.csv"
 end
 if  string.find(opt.model, 'rambo') ~= nil  then
         WIDTH, HEIGHT =  320, 160
@@ -115,7 +116,7 @@ end
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
 --     print(dataset[idx][2])
-     return torch.DoubleTensor{opt.scale*dataset[idx][2] + 1}
+     return torch.DoubleTensor{opt.scale*dataset[idx][2]}
 end
 
 function getTestSample(dataset, idx)

@@ -117,6 +117,7 @@ end
 
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
+    -- print(dataset[idx][2])
     return torch.DoubleTensor { opt.scale * dataset[idx][2] }
 end
 
@@ -201,7 +202,7 @@ testDataset = tnt.ListDataset {
 local model = require("models/" .. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.SmoothL1Criterion() -- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.MSECriterion()-- nn.SmoothL1Criterion() -- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter { topk = { 1 } }
 local timer = tnt.TimeMeter()
@@ -352,7 +353,7 @@ engine.hooks.onForward = function(state)
     local fileNames = state.sample.sampleId
     local pred = state.network.output
     for i = 1, pred:size(1) do
-        submission:write(fileNames[i] .. ',' .. string.format("%f\n", pred[i][1]))
+        submission:write(fileNames[i] .. ',' .. string.format("%f\n", pred[i][1]/opt.scale))
         --submission:write(string.format("%05d,%f\n", fileNames[i][1], pred[i][1]))
     end
     xlua.progress(batch, dataSize)
