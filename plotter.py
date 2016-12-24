@@ -30,12 +30,14 @@ for filename in sys.argv[1:]:
         # original_angles.append(evaluation_data[frame_id])
         if i == 2:
             angle =  float(angle)
-            title  = "HSV Scheme"
+            title  = "YUV Scheme"
         else:
             angle =  float(angle) - 1
-            title = "YUV Scheme"
+            title = "HSV Scheme"
 
         new_angles[frame_id] = angle
+    print filename, title
+
     key_list = evaluation_data.keys()
     ax.set_title(title, fontsize=10)
     key_list.sort()
