@@ -12,7 +12,7 @@ k = len(sys.argv[1:])
 
 
 
-plt.suptitle('Plots for Residual Network', fontsize=12)
+plt.suptitle('Plots for NVIDIA Network', fontsize=12)
 for filename in sys.argv[1:]:
     original_angles = []
 
