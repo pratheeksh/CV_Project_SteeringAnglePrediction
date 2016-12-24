@@ -49,4 +49,4 @@ if (options.isplot):
     plt.plot(x, new_angles, label="Predicted Angles")
     plt.legend()
     plt.show()
-    plt.save("result.png")
+    plt.savefig("result.png")
