@@ -45,8 +45,11 @@ print("Rows in common", count)
 print final_error  # /10000.00
 if (options.isplot):
     x = range(5614)
+
+    plt.axhline(0, color='cyan')
     plt.plot(x, original_angles, label="original Angles")
     plt.plot(x, new_angles, label="Predicted Angles")
     plt.legend()
-    plt.show()
     plt.savefig("result.png")
+
+    plt.show()
