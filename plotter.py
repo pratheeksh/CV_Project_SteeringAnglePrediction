@@ -12,7 +12,7 @@ k = len(sys.argv[1:])
 
 
 
-plt.suptitle('Plots for NVIDIA Network', fontsize=12)
+plt.suptitle('Plots for Rambo Network', fontsize=12)
 for filename in sys.argv[1:]:
     original_angles = []
 
@@ -24,12 +24,22 @@ for filename in sys.argv[1:]:
         if "Filename" in row:
             continue
         if "Model" in row:
-            ax.set_title(row.split(',')[1],  fontsize=10)
+            #ax.set_title(row.split(',')[1],  fontsize=10)
             continue
         frame_id, angle = row.split(',')
         # original_angles.append(evaluation_data[frame_id])
-        new_angles[frame_id] = float(angle)
+        if i == 2:
+            angle =  float(angle)
+            title  = "YUV Scheme"
+        else:
+            angle =  float(angle) - 1
+            title = "HSV Scheme"
+
+        new_angles[frame_id] = angle
+    print filename, title
+
     key_list = evaluation_data.keys()
+    ax.set_title(title, fontsize=10)
     key_list.sort()
     for frame_id in key_list:
         original_angles.append(evaluation_data[frame_id])
