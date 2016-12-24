@@ -44,7 +44,7 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 128,128 -- 320,140
+local WIDTH, HEIGHT =  320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
@@ -220,7 +220,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.CrossEntropyCriterion() --nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
