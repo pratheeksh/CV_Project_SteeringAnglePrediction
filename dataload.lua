@@ -20,11 +20,15 @@ if  string.find(opt.model, 'rambo') ~= nil  then
         WIDTH, HEIGHT =  320, 160
 	trainDataPath = "data_/csv/center.csv"
 end
-
+if string.find(opt.model, 'resnet') ~= nil then 
+	WIDTH, HEIGHT = 128, 128
+end
+additive = 0
 
 if string.find(opt.model, 'class') ~= nil then 
 -- print("Some classification stuff")
-	trainDataPath = "data_/csv/centerclasses.csv"
+additive = 1	
+trainDataPath = "data_/csv/centerclasses.csv"
 end
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
@@ -116,7 +120,7 @@ end
 function getTrainLabel(dataset, idx)
     -- return torch.LongTensor{dataset[idx][9] + 1}
 --     print(dataset[idx][2])
-     return torch.DoubleTensor{opt.scale*dataset[idx][2]}
+     return torch.DoubleTensor{opt.scale*dataset[idx][2] + additive }
 end
 
 function getTestSample(dataset, idx)

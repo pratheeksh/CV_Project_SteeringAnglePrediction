@@ -44,7 +44,7 @@ local image = require 'image'
 local optParser = require 'opts'
 local opt = optParser.parse(arg)
 
-local WIDTH, HEIGHT = 320, 160 -- 128,128 -- 320,140
+local WIDTH, HEIGHT = 128,128 -- 320,140
 local DATA_PATH = (opt.data ~= '' and opt.data or './data_/')
 
 
@@ -158,8 +158,10 @@ if opt.reweight == true then
             -- the last 0.1 of the dataset belongs to val, so we don't do resampling there.
             if torch.rand(1)[1] < 1 - bias or
                    idx > torch.floor(dataset:size() * (1.0 - opt.val)) then
+--		print("val")
                 return idx
             end
+
         	random_num = torch.random(1,40)  
 --		print("ranom num", random_num)  
  		chooser = classTables[random_num]
@@ -218,7 +220,7 @@ testDataset = tnt.ListDataset{
 local model = require("models/".. opt.model)
 local engine = tnt.OptimEngine()
 local meter = tnt.AverageValueMeter()
-local criterion = nn.CrossEntropyCriterion() --nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
+local criterion = nn.MSECriterion() -- nn.CrossEntropyCriterion() --nn.SmoothL1Criterion()-- nn.MSECriterion()--nn.CrossEntropyCriterion()
 -- local criterion =nn.CrossEntropyCriterion()
 local clerr = tnt.ClassErrorMeter{topk = {1}}
 local timer = tnt.TimeMeter()
@@ -268,7 +270,7 @@ engine.hooks.onStart = function(state)
 
     if opt.reweight == true then
       --  bias = (opt.reweightEnd - epoch) / (opt.reweightEnd - opt.reweightStart)
-        bias = 0.2 -- math.max(0, math.min(1, bias))
+        bias = 1 -- math.max(0, math.min(1, bias))
     end
 end
 
@@ -369,6 +371,13 @@ while epoch <= opt.nEpochs do
     print('Done with Epoch '..tostring(epoch))
 --    print(logs.val_loss)
     epoch = epoch + 1
+
+   if opt.reweight == true then
+        --bias = (1 - epoch) / (opt.nEpochs)
+       --bias = math.max(0, math.min(1, bias))
+
+	print("Bias is now set to ", bias)
+    end
 end
 
 error_out:close()
