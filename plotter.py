@@ -26,5 +26,5 @@ for filename in sys.argv[1:]:
     ax.plot(x, dummy, label="Predicted Angles")
     ax.scatter(x, original_angles, label="Original Angles", color='green', s=1)
 
-plt.legend()
+    ax.legend()
 plt.show()
