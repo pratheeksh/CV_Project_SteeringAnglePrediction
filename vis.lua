@@ -1,0 +1,23 @@
+th = require('torch')
+image = require('image')
+require('nn')
+require('cunn')
+require('cudnn')
+
+img = image.load(arg[1])
+a = image.scale(img[{{},{100,480},{}}],320,140)
+--image.display(a)
+-- image.save('test-img.jpg',a)
+gg = torch.CudaTensor(1,3,140,320)
+gg[{1}] = a
+mod = th.load('nvidia_init0.000100.t7')
+print(mod:forward(gg[{1}]))
+
+print(mod:get(2).output:size())
+some = torch.Tensor(68,158)
+some:copy(mod:get(1).output[{1,9}])
+some = image.scale(some,320,140)
+-- image.save('nvidia-first-layer.jpg',some)
+image.display(mod:get(2).output[{1}])
+image.display(some)
+-- print(mod:get(1).output[{1,9}]:size())

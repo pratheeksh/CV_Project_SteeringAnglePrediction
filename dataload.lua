@@ -23,6 +23,10 @@ end
 if string.find(opt.model, 'resnet') ~= nil then 
 	WIDTH, HEIGHT = 128, 128
 end
+if string.find(opt.model, 'imagenet') ~= nil then 
+
+	WIDTH, HEIGHT = 224, 224
+end
 additive = 0
 
 if string.find(opt.model, 'class') ~= nil then 
@@ -101,9 +105,9 @@ function transformInput(inp)
        [2] = colortransform,
        -- [3] = norm
     }
-    --[[if opt.noise or torch.random(0,1) < 1 then
+    if opt.noise or torch.random(0,1) < 1 then
         inp = addNoise(inp)
-    end --]]   
+    end --]]  
     -- image.display(f(inp))
     return f(inp)
 end
