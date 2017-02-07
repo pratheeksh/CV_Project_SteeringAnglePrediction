@@ -14,7 +14,7 @@ A similar problem is addressed by the self-driving car team at NVIDIA, in the pa
 learning of Self-driving cars.
 
 ## Results
-We report MSE for Resnet and Baseline , Smoothed-L1-loss for Nvidia network regression and Cross-Entropy fro Nvidia network Classification. We switched to Smoothed-L1-loss early on be- cause our models weren’t converging. The Nvidia-regression results are from then. The final test- error turned out to be the same if the model converged for the same number of epochs. Later on we moved to ADAM optimization and specific random initialization procedures like in [5]and got both Resnet and Nvidia to converge. Considering this MSE seemed like a more natural measure.
+We report MSE for Resnet and Baseline , Smoothed-L1-loss for Nvidia network regression and Cross-Entropy fro Nvidia network Classification. We switched to Smoothed-L1-loss early on because our models weren’t converging. The Nvidia-regression results are from then. The final test-error turned out to be the same if the model converged for the same number of epochs. Later on we moved to ADAM optimization and specific random initialization procedures like in [5]and got both Resnet and Nvidia to converge. Considering this MSE seemed like a more natural measure.
 
 ### Credits
 The one person that indubitably deserves credit for this project, arguably more than the authors themselves, is Lucian Ionita who generously allowed us to use his GPUs.
