@@ -16,11 +16,11 @@ learning of Self-driving cars.
 ## Results
   Model | Train loss | Valid loss | Test Error
   --- | --- | --- | --- 
-
   Baseline | 0.0012 | 0.0026 |  0.04 
   Nvidia-40 class | 0.44 | 0.51 | -
   Resnet  |0.0028| 0.0045 |  0.019| 
   Nvidia-regression | 0.0002 | 0.0004 |0.03 
+  
 We report MSE for Resnet and Baseline, Smoothed-L1-loss for Nvidia network regression and Cross-Entropy for Nvidia network Classification. We switched to Smoothed-L1-loss early on because our models weren’t converging. The Nvidia-regression results are from them. The final test-error turned out to be the same if the model converged for the same number of epochs. Later on we moved to ADAM optimization and specific random initialization procedures and got both Resnet and Nvidia to converge. Considering this MSE seemed like a more natural measure.
 
 ### Credits
